@@ -31,7 +31,7 @@ boolean temperature_sensor_ok = true; //Set to false automatically if a DS18B20 
 boolean ota_mode = false; //Set to true automatically when doing OTA update
 String ota_hash = ""; //SHA256 of the OTA update, set automatically.
 
-boolean using_bw16 = false; //Set when advanced config is sb_bw16=yes https://wardriver.uk/advanced_config
+boolean using_bw16 = true; //Set when advanced config is sb_bw16=yes https://wardriver.uk/advanced_config
 
 #define mac_history_len 1024
 
@@ -229,6 +229,7 @@ void setup() {
     Serial.println("Using BW16 instead of SIM800L");
   }
 
+  Serial2.setRxBufferSize(4096);
   Serial2.begin(baud_rate,SERIAL_8N1,16,17); //SIM800L/BW16
   delay(50);
   if (!using_bw16){
@@ -525,7 +526,10 @@ void loop2( void * parameter) {
           }
           if (counter == 2){
             //Security type
-            if (match.indexOf("WPA2 AES") > -1 || match.indexOf("WPA2 TKIP") > -1 || match.indexOf("WPA2 PSK") > -1) {
+            if ((match.indexOf("WPA/WPA2 PSK") > -1) && enc_type == 0) {
+              enc_type = WIFI_AUTH_WPA_WPA2_PSK;
+            }
+            if ((match.indexOf("WPA2 AES") > -1 || match.indexOf("WPA2 TKIP") > -1 || match.indexOf("WPA2 PSK") > -1) && enc_type == 0) {
               enc_type = WIFI_AUTH_WPA2_PSK;
             }
             if ((match.indexOf("WPA2/WPA3 PSK") > -1) && enc_type == 0) {
@@ -533,9 +537,6 @@ void loop2( void * parameter) {
             }
             if ((match.indexOf("WPA3") > -1 || match.indexOf("WPA3 PSK") > -1) && enc_type == 0) {
               enc_type = WIFI_AUTH_WPA3_PSK;
-            }
-            if ((match.indexOf("WPA/WPA2 PSK") > -1) && enc_type == 0) {
-              enc_type = WIFI_AUTH_WPA_WPA2_PSK;
             }
             if ((match.indexOf("WPA Enterprise") > -1 || match.indexOf("WPA2 Enterprise") > -1 || match.indexOf("WPA/WPA2 Enterprise") > -1) && enc_type == 0) {
               enc_type = WIFI_AUTH_ENTERPRISE;
