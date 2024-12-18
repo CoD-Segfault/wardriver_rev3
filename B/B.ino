@@ -80,12 +80,15 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
           String ble_name = advertisedDevice.getName().c_str();
           ble_name.replace(",","_");
           
+          await_serial();
+          serial_lock = true;
           Serial1.print("BL,");
           Serial1.print(advertisedDevice.getRSSI());
           Serial1.print(",");
           Serial1.print(advertisedDevice.getAddress().toString().c_str());
           Serial1.print(",");
           Serial1.println(ble_name);
+          serial_lock = false;
         }
       }
     }
@@ -229,7 +232,7 @@ void setup() {
     Serial.println("Using BW16 instead of SIM800L");
   }
 
-  Serial2.setRxBufferSize(4096);
+  Serial2.setRxBufferSize(8192);
   Serial2.begin(baud_rate,SERIAL_8N1,16,17); //SIM800L/BW16
   delay(50);
   if (!using_bw16){
@@ -394,9 +397,10 @@ void loop() {
     }
   }
 
+  BLEScanResults* foundDevices = pBLEScan->start(1.8, false);
   await_serial();
   serial_lock = true;
-  BLEScanResults* foundDevices = pBLEScan->start(1.8, false);
+
   Serial1.print("BLC,");
   Serial1.println(ble_found);
   serial_lock = false;
