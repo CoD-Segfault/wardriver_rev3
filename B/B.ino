@@ -6,9 +6,7 @@
 //Serial2 = SIM800L module, 9600
 
 #include <WiFi.h>
-#include <BLEDevice.h>
-#include <BLEScan.h>
-#include <BLEAdvertisedDevice.h>
+#include <NimBLEDevice.h>
 #include <Update.h>
 #include "mbedtls/sha256.h"
 #include "mbedtls/md.h"
@@ -273,8 +271,8 @@ void setup() {
   // * BLUETOOTH setup if our PREFERENCE is ENABLED *
   if (scanBLE) {
     ESP_LOGD(LOG_TAG_GENERIC, "Setting up Bluetooth scanning");
-    BLEDevice::init("");
-    pBLEScan = BLEDevice::getScan(); //create new scan
+    NimBLEDevice::init("");
+    pBLEScan = NimBLEDevice::getScan(); //create new scan
     pBLEScan->setActiveScan(false); //active scan uses more power, but get results faster
     pBLEScan->setInterval(100);
     pBLEScan->setWindow(50);  // less or equal setInterval value
@@ -416,15 +414,21 @@ void loop() {
   // * Scanning BLUETOOTH only if preference is ENABLED *
   if (scanBLE) {
     ESP_LOGD(LOG_TAG_GENERIC, "Start BLE scan");
-    BLEScanResults* foundDevices = pBLEScan->start(1, false);
-    ble_found = foundDevices->getCount();
+    NimBLEScanResults foundDevices = pBLEScan->getResults(1000, false);
+    ble_found = foundDevices.getCount();
     
     for (int i = 0; i < ble_found; i++) {
       unsigned char mac_bytes[6];
       int values[6];
 
-      BLEAdvertisedDevice device = foundDevices->getDevice(i);
-      if (6 == sscanf(device.getAddress().toString().c_str(), "%x:%x:%x:%x:%x:%x%*c", &values[0], &values[1], &values[2], &values[3], &values[4], &values[5])){
+      const NimBLEAdvertisedDevice* device = foundDevices.getDevice(i);
+      if (!device) {
+        continue;
+      }
+
+      String addrStr = device->getAddress().toString().c_str();
+
+      if (6 == sscanf(addrStr.c_str(), "%x:%x:%x:%x:%x:%x%*c", &values[0], &values[1], &values[2], &values[3], &values[4], &values[5])){
         for(int i = 0; i < 6; ++i ){
             mac_bytes[i] = (unsigned char) values[i];
         }
@@ -432,15 +436,15 @@ void loop() {
         if (!seen_mac(mac_bytes)){
           save_mac(mac_bytes);
 
-          String ble_name = device.getName().c_str();
+          String ble_name = device->getName().c_str();
           ble_name.replace(",","_");
 
           await_serial();
           serial_lock = true;
           Serial1.print("BL,");
-          Serial1.print(device.getRSSI());
+          Serial1.print(device->getRSSI());
           Serial1.print(",");
-          Serial1.print(device.getAddress().toString().c_str());
+          Serial1.print(addrStr);
           Serial1.print(",");
           Serial1.println(ble_name);
           serial_lock = false;

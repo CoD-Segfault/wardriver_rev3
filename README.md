@@ -37,6 +37,7 @@ In order for the project to compile, you need to download the following librarie
 - [Adafruit SSD1306](https://github.com/adafruit/Adafruit_SSD1306) v2.5.x by Adafruit
 - [OneWire](https://www.pjrc.com/teensy/td_libs_OneWire.html) at least v2.3.7 by Paul Stoffregen
 - [GParser](https://github.com/GyverLibs/GParser) v1.4.x by AlexGyver
+- [NimBLE-Arduino](https://github.com/h2zero/NimBLE-Arduino) v2.3.9 by h2zero
 
 You can find the exact version number which should be installed in the file `libraries.txt`.
 
